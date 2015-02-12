@@ -13,7 +13,7 @@ app.config(["$routeProvider", function($routeProvider) {
         templateUrl: 'search.html'
     })
     .when('/owner/:id', {
-        templateUrl: 'owner.html'
+        templateUrl: 'search.html'
 
     })
     .otherwise({
@@ -54,54 +54,30 @@ module.exports = function SearchCtrl($http, $route, FlickrService, $location, $s
     };
 
     vm.search = function () {
-        if ($scope.searchByTag) {
-            console.log($scope.searchByTag);
-            FlickrService.res('flickr.photos.search').search({ tags: vm.tags }, function (data) {
-                vm.photos = data.photos.photo;
-                vm.imagesArr(vm.photos);
-            });
-            // URL update
-            $location.path('/search/'+ vm.tags);
-        }
-        else {
-            FlickrService.res('flickr.people.getPublicPhotos').search({ user_id: vm.id }, function (data) {
-                vm.photos = data.photos.photo;
-                vm.imagesArr(vm.photos);
-            });
-
-            // URL update
-            $location.path('/owner/'+ vm.tags);
-        }
+        $location.path($scope.searchByTag ? '/search/'+ vm.tags : '/owner/'+ vm.tags);
     };
 
     vm.init = function() {
-        if(vm.tags) {
-            FlickrService.res('flickr.photos.search').search({ tags: vm.tags }, function (data) {
-                vm.photos = data.photos.photo;
-                vm.imagesArr(vm.photos);
-            });
-        }
-        if(vm.id) {
-            FlickrService.res('flickr.people.getPublicPhotos').search({ user_id: vm.id }, function (data) {
-                vm.photos = data.photos.photo;
-                vm.imagesArr(vm.photos);
-            });
-        }
+        FlickrService.res(vm.tags ? 'flickr.photos.search' : 'flickr.people.getPublicPhotos')
+        .search(vm.tags ? { tags: vm.tags } : { user_id: vm.id }, function (data) {
+            vm.photos = data.photos.photo;
+            vm.imagesArr(vm.photos);
+        });
     };
     vm.init();
 
     //Creating images array for lightbox plugin
     vm.imagesArr = function(photos) {
-        for(var photo in photos) {
-            vm.images.push({'url':'https://farm'+photos[photo].farm+'.staticflickr.com/'+
-                photos[photo].server+'/'+photos[photo].id+'_'+photos[photo].secret+'_'+
-                vm.sizeb+'.jpg'});
-        }
+        angular.forEach(photos, function(obj) {
+            obj.url='https://farm'+obj.farm+'.staticflickr.com/'+
+                obj.server+'/'+obj.id+'_'+obj.secret+'_'+
+                vm.sizeb+'.jpg';
+        });
     };
     //Lightbox plugin initiation
     //
     vm.openLightboxModal = function (index) {
-    Lightbox.openModal(vm.images, index);
+    Lightbox.openModal(vm.photos, index);
   };
 
 
